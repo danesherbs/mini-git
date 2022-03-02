@@ -37,8 +37,8 @@ def init(args):
 def hash_object(args):
     with open(args.file, "rb") as f:
         data = f.read()
-        obj = minigit.database.hash_objects(data)
-    print(obj)
+        hash = minigit.database.hash_objects(data)
+    print(hash)
 
 
 def cat_file(args):
@@ -48,4 +48,5 @@ def cat_file(args):
 
 def write_tree(args):
     pwd = pathlib.Path(".")
-    minigit.core.write_tree(pwd)
+    hash = minigit.core.write_tree(pwd)
+    print(hash)
