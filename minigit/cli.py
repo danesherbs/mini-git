@@ -1,5 +1,7 @@
-import minigit.database
+import pathlib
 import argparse
+import minigit.database
+import minigit.core
 
 
 def main():
@@ -45,4 +47,5 @@ def cat_file(args):
 
 
 def write_tree(args):
-    minigit.database.write_tree()
+    pwd = pathlib.Path(".")
+    minigit.core.write_tree(pwd)
