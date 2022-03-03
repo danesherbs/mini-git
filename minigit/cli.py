@@ -37,6 +37,7 @@ def parse_args():
 
     log_parser = subparsers.add_parser("log")
     log_parser.set_defaults(func=log)
+    read_tree_parser.add_argument("hash", type=str)
 
     return parser.parse_args()
 
@@ -73,7 +74,7 @@ def commit(args):
 
 
 def log(args):
-    hash = minigit.database.get_head()
+    hash = args.hash or minigit.database.get_head()
     while hash:
         cmt = minigit.core.get_commit(hash)
         print(f"commit {hash}\n{cmt.message}")
