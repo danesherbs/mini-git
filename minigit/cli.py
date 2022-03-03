@@ -37,7 +37,7 @@ def parse_args():
 
     log_parser = subparsers.add_parser("log")
     log_parser.set_defaults(func=log)
-    read_tree_parser.add_argument("hash", type=str)
+    log_parser.add_argument("hash", nargs="?", type=str)
 
     return parser.parse_args()
 
