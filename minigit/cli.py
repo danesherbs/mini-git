@@ -31,6 +31,13 @@ def parse_args():
     read_tree_parser.set_defaults(func=read_tree)
     read_tree_parser.add_argument("hash", type=str)
 
+    commit_parser = subparsers.add_parser("commit")
+    commit_parser.set_defaults(func=commit)
+    commit_parser.add_argument("-m", "--message", type=str, required=True)
+
+    log_parser = subparsers.add_parser("log")
+    log_parser.set_defaults(func=log)
+
     return parser.parse_args()
 
 
@@ -58,3 +65,16 @@ def write_tree(args):
 
 def read_tree(args):
     minigit.core.read_tree(args.hash)
+
+
+def commit(args):
+    hash = minigit.core.commit(args.message)
+    print(hash)
+
+
+def log(args):
+    hash = minigit.database.get_head()
+    while hash:
+        cmt = minigit.core.get_commit(hash)
+        print(f"commit {hash}\n{cmt.message}")
+        hash = cmt.parent

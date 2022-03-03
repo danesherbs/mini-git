@@ -1,17 +1,26 @@
+from collections import namedtuple
+import re
+from typing import Union
 import os
 import pathlib
 import minigit.database
 
 
-def write_tree(path: pathlib.Path) -> str:
+Commit = namedtuple("Commit", ["tree", "parent", "message"])
+
+
+def write_tree(path: Union[pathlib.Path, None] = None) -> str:
     """
-    Creates a file representing the tree at `path` in the object database.
-    The tree file is structured like so:
+    Creates a file in the object database which encodes the tree at `path`.
+    The file is structured like so:
 
         blob 91a7b14a584645c7b995100223e65f8a5a33b707 cats.txt
         blob fa958e0dd2203e9ad56853a3f51e5945dad317a4 dogs.txt
         tree 53891a3c27b17e0f8fd96c058f968d19e340428d other
     """
+    if path is None:
+        path = pathlib.Path(".")
+
     entries = []
 
     for p in path.iterdir():
@@ -81,3 +90,36 @@ def delete_all_files_in_directory(dir: pathlib.Path):
 
         if path.is_dir():
             delete_all_files_in_directory(dir / path)
+
+
+def commit(message: str):
+    data = f"tree {write_tree()}\n"
+    head = minigit.database.get_head()
+    if head:
+        data += f"parent {head}\n"
+    data += "\n"
+    data += f"{message}\n"
+    data = data.encode()
+    commit_hash = minigit.database.hash_objects(data, _type="commit")
+    minigit.database.set_head(commit_hash)
+    return commit_hash
+
+
+def get_commit(hash: str):
+    data = minigit.database.get_object(hash).decode()
+    match = re.match(
+        r"tree (?P<tree>[a-zA-Z0-9]+)\n(parent (?P<parent>[a-zA-Z0-9]+)\n)?\n(?P<message>.*)",
+        data,
+        re.MULTILINE | re.DOTALL,
+    )
+
+    if not match:
+        raise ValueError(f"Got unexpected formatted commit:\n\n{data}")
+
+    groups = match.groupdict()
+
+    return Commit(
+        tree=groups["tree"],
+        parent=groups["parent"] if "parent" in groups else None,
+        message=groups["message"],
+    )

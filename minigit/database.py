@@ -30,3 +30,18 @@ def get_object(hash: str) -> bytes:
     data_type, _, data = data_with_type.partition(NULL_BYTE)
 
     return data
+
+
+def set_head(hash: str):
+    with open(GIT_DIR / "HEAD", "w") as f:
+        f.write(hash)
+
+
+def get_head():
+    fname = GIT_DIR / "HEAD"
+
+    if not fname.is_file():
+        return None
+
+    with open(fname, "r") as f:
+        return f.read().strip()
