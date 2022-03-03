@@ -1,3 +1,4 @@
+import os
 import pathlib
 import minigit.database
 
@@ -35,6 +36,8 @@ def write_tree(path: pathlib.Path) -> str:
 
 
 def read_tree(hash: str) -> None:
+    pwd = pathlib.Path("")
+    delete_all_files_in_directory(pwd)
     for path, hash in get_tree(hash).items():
         path.parent.mkdir(parents=True, exist_ok=True)
         data = minigit.database.get_object(hash)
@@ -66,3 +69,15 @@ def is_ignored(path: pathlib.Path) -> bool:
         return True
 
     return ".minigit" in path.parts
+
+
+def delete_all_files_in_directory(dir: pathlib.Path):
+    for path in dir.iterdir():
+        if is_ignored(path):
+            continue  # skip ignored paths
+
+        if path.is_file():
+            os.remove(path)
+
+        if path.is_dir():
+            delete_all_files_in_directory(dir / path)
