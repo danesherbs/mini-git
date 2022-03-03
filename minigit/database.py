@@ -13,10 +13,10 @@ def init():
 
 def hash_objects(data: bytes, _type="blob") -> str:
     data_with_type = _type.encode() + NULL_BYTE + data
-    oid = hashlib.sha1(data_with_type).hexdigest()
-    with open(OBJECTS_DIR / oid, "wb") as f:
+    hash = hashlib.sha1(data_with_type).hexdigest()
+    with open(OBJECTS_DIR / hash, "wb") as f:
         f.write(data_with_type)
-    return oid
+    return hash
 
 
 def cat_file(hash: str) -> bytes:
@@ -28,7 +28,5 @@ def get_object(hash: str) -> bytes:
         data_with_type = f.read()
 
     data_type, _, data = data_with_type.partition(NULL_BYTE)
-
-    # TODO: should we assert type here?
 
     return data

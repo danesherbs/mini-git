@@ -27,6 +27,10 @@ def parse_args():
     write_tree_parser = subparsers.add_parser("write-tree")
     write_tree_parser.set_defaults(func=write_tree)
 
+    read_tree_parser = subparsers.add_parser("read-tree")
+    read_tree_parser.set_defaults(func=read_tree)
+    read_tree_parser.add_argument("hash", type=str)
+
     return parser.parse_args()
 
 
@@ -50,3 +54,7 @@ def write_tree(args):
     pwd = pathlib.Path(".")
     hash = minigit.core.write_tree(pwd)
     print(hash)
+
+
+def read_tree(args):
+    minigit.core.read_tree(args.hash)
