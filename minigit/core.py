@@ -3,6 +3,8 @@ import re
 from typing import Union
 import os
 import pathlib
+
+from click import command
 import minigit.database
 
 
@@ -44,7 +46,7 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
     return minigit.database.hash_objects(tree, _type="tree")
 
 
-def read_tree(hash: str) -> None:
+def read_tree(hash: str):
     pwd = pathlib.Path("")
     delete_all_files_in_directory(pwd)
     for path, hash in get_tree(hash).items():
@@ -123,3 +125,9 @@ def get_commit(hash: str):
         parent=groups["parent"] if "parent" in groups else None,
         message=groups["message"],
     )
+
+
+def checkout(hash: str):
+    cmt = get_commit(hash)
+    read_tree(cmt.tree)
+    minigit.database.set_head(hash)

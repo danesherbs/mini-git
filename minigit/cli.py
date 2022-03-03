@@ -39,6 +39,10 @@ def parse_args():
     log_parser.set_defaults(func=log)
     log_parser.add_argument("hash", nargs="?", type=str)
 
+    checkout_parser = subparsers.add_parser("checkout")
+    checkout_parser.set_defaults(func=checkout)
+    checkout_parser.add_argument("hash", type=str)
+
     return parser.parse_args()
 
 
@@ -77,5 +81,9 @@ def log(args):
     hash = args.hash or minigit.database.get_head()
     while hash:
         cmt = minigit.core.get_commit(hash)
-        print(f"commit {hash}\n{cmt.message}")
+        print(f"\033[93mcommit {hash}\033[0m\n\n    {cmt.message}")
         hash = cmt.parent
+
+
+def checkout(args):
+    minigit.core.checkout(args.hash)
