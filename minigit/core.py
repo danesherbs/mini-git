@@ -4,7 +4,6 @@ from typing import Union
 import os
 import pathlib
 
-from click import command
 import minigit.database
 
 
