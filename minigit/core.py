@@ -24,25 +24,48 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
 
     entries = []
 
-    for p in path.iterdir():
+    for p in paths(path):
         if is_ignored(p):
             continue
 
         if p.is_file():
-            with open(p, "rb") as f:
-                data = f.read()
-                hash = minigit.database.hash_objects(data, _type="blob")
+            data = read_bytes(p)
+            hash = hash_file(data)
             entries.append((p.name, hash, "blob"))
 
         if p.is_dir():
             hash = write_tree(p)
             entries.append((p.name, hash, "tree"))
 
-    tree = "".join(
-        f"{_type} {hash} {name}\n" for name, hash, _type in sorted(entries)
-    ).encode()
+    tree = to_tree(entries)
+    data = to_bytes(tree)
 
-    return minigit.database.hash_objects(tree, _type="tree")
+    return hash_tree(data)
+
+
+def paths(path: pathlib.Path):
+    return path.iterdir()
+
+
+def read_bytes(path: pathlib.Path):
+    with open(path, "rb") as f:
+        return f.read()
+
+
+def hash_file(data: bytes):
+    return minigit.database.hash_objects(data, _type="blob")
+
+
+def hash_tree(data: bytes):
+    return minigit.database.hash_objects(data, _type="tree")
+
+
+def to_tree(entries: list):
+    return "".join(f"{_type} {hash} {name}\n" for name, hash, _type in sorted(entries))
+
+
+def to_bytes(s: str):
+    return s.encode()
 
 
 def read_tree(hash: str):
