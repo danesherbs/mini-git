@@ -37,10 +37,14 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
             hash = write_tree(p)
             entries.append((p.name, hash, "tree"))
 
-    tree = to_tree(entries)
-    data = to_bytes(tree)
+    data = entries_to_bytes(entries)
 
     return hash_tree(data)
+
+
+def entries_to_bytes(entries: list):
+    tree = to_tree(entries)
+    return to_bytes(tree)
 
 
 def paths(path: pathlib.Path):
@@ -53,11 +57,11 @@ def read_bytes(path: pathlib.Path):
 
 
 def hash_file(data: bytes):
-    return minigit.database.hash_objects(data, _type="blob")
+    return minigit.database.save_object(data, _type="blob")
 
 
 def hash_tree(data: bytes):
-    return minigit.database.hash_objects(data, _type="tree")
+    return minigit.database.save_object(data, _type="tree")
 
 
 def to_tree(entries: list):
@@ -124,7 +128,7 @@ def commit(message: str):
     data += "\n"
     data += f"{message}\n"
     data = data.encode()
-    commit_hash = minigit.database.hash_objects(data, _type="commit")
+    commit_hash = minigit.database.save_object(data, _type="commit")
     minigit.database.set_head(commit_hash)
     return commit_hash
 

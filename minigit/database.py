@@ -11,10 +11,10 @@ def init():
     OBJECTS_DIR.mkdir()
 
 
-def hash_objects(data: bytes, _type="blob") -> str:
+def save_object(data: bytes, _type="blob") -> str:
     object = Object(data=data, type=_type)
     with open(OBJECTS_DIR / object.hash, "wb") as f:
-        f.write(object.data)
+        f.write(object.data_with_type)
     return object.hash
 
 

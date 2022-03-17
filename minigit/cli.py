@@ -53,7 +53,7 @@ def init(args):
 def hash_object(args):
     with open(args.file, "rb") as f:
         data = f.read()
-        hash = minigit.database.hash_objects(data)
+        hash = minigit.database.save_object(data)
     print(hash)
 
 
