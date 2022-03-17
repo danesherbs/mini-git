@@ -1,13 +1,13 @@
 from collections import namedtuple
 import re
-from typing import Union
+from typing import Any, Dict, Union
 import os
 import pathlib
 
 import minigit.database
 
 
-Commit = namedtuple("Commit", ["tree", "parent", "message"])
+# Commit = namedtuple("Commit", ["tree", "parent", "message"])
 
 
 def save_tree(path: Union[pathlib.Path, None] = None) -> str:
@@ -27,8 +27,7 @@ def save_tree(path: Union[pathlib.Path, None] = None) -> str:
             continue
 
         if p.is_file():
-            data = read_bytes(p)
-            hash = hash_file(data)
+            hash = save_file(p)
             entries.append((p.name, hash, "blob"))
 
         if p.is_dir():
@@ -38,6 +37,11 @@ def save_tree(path: Union[pathlib.Path, None] = None) -> str:
     data = entries_to_bytes(entries)
 
     return hash_tree(data)
+
+
+def save_file(path: pathlib.Path):
+    data = read_bytes(path)
+    return hash_file(data)
 
 
 def get_path(path: pathlib.Path):
@@ -126,39 +130,65 @@ def delete_all_files_in_directory(dir: pathlib.Path):
 
 
 def commit(message: str):
-    data = f"tree {save_tree()}\n"
+    tree_hash = save_tree()
     head = minigit.database.get_head()
-    if head:
-        data += f"parent {head}\n"
-    data += "\n"
-    data += f"{message}\n"
-    data = data.encode()
+    data = Commit(tree_hash, head, message).to_bytes()
     commit_hash = minigit.database.save_object(data, _type="commit")
     minigit.database.set_head(commit_hash)
     return commit_hash
 
 
+class Commit:
+    def __init__(self, tree_hash: str, head: Union[str, None], message: str) -> None:
+        self.tree_hash = tree_hash
+        self.head = head
+        self.message = message
+
+    def __str__(self):
+        if not self.head:
+            return f"tree {self.tree_hash}\n\n{self.message}\n"
+
+        return f"tree {self.tree_hash}\nparent {self.head}\n\n{self.message}\n"
+
+    def to_bytes(self):
+        return str(self).encode()
+
+
+class CommitParser:
+    def __init__(self, data):
+        self.data = data
+
+    def is_valid_commit(self):
+        return self.match_object is not None
+
+    @property
+    def match_object(self):
+        return re.match(self.commit_regex, self.data, re.MULTILINE | re.DOTALL)
+
+    @property
+    def commit_regex(self):
+        return r"tree (?P<tree>[a-zA-Z0-9]+)\n(parent (?P<parent>[a-zA-Z0-9]+)\n)?\n(?P<message>.*)"
+
+    def to_commit(self):
+        groups = self.match_object.groupdict()
+        return Commit(
+            tree_hash=groups["tree"],
+            head=groups["parent"] if "parent" in groups else None,
+            message=groups["message"],
+        )
+
+
 def get_commit(hash: str):
     data = minigit.database.load_object(hash).decode()
-    match = re.match(
-        r"tree (?P<tree>[a-zA-Z0-9]+)\n(parent (?P<parent>[a-zA-Z0-9]+)\n)?\n(?P<message>.*)",
-        data,
-        re.MULTILINE | re.DOTALL,
-    )
+    parser = CommitParser(data)
 
-    if not match:
+    if not parser.is_valid_commit():
         raise ValueError(f"Got unexpected formatted commit:\n\n{data}")
 
-    groups = match.groupdict()
-
-    return Commit(
-        tree=groups["tree"],
-        parent=groups["parent"] if "parent" in groups else None,
-        message=groups["message"],
-    )
+    return CommitParser.to_commit()
 
 
 def checkout(hash: str):
     cmt = get_commit(hash)
-    restore_tree(cmt.tree)
+    restore_tree(cmt.tree_hash)
     minigit.database.set_head(hash)
