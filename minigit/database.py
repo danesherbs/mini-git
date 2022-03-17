@@ -24,6 +24,11 @@ class Object:
     def data_with_type(self):
         return self.type.encode() + NULL_BYTE + self.data
 
+    @staticmethod
+    def from_bytes(data_with_type: bytes):
+        type, _, data = data_with_type.partition(NULL_BYTE)
+        return Object(data=data, type=type)
+
 
 def save_object(data: bytes, _type="blob") -> str:
     object = Object(data=data, type=_type)
@@ -33,9 +38,10 @@ def save_object(data: bytes, _type="blob") -> str:
 
 
 def load_object(hash: str) -> bytes:
-    data_with_type = read_object(hash)
-    data_type, data = parse_bytes(data_with_type)
-    return data
+    with open(OBJECTS_DIR / hash, "rb") as f:
+        data_with_type = f.read()
+        object = Object.from_bytes(data_with_type)
+    return object.data
 
 
 def cat_file(hash: str) -> bytes:
@@ -45,11 +51,6 @@ def cat_file(hash: str) -> bytes:
 def read_object(hash: str):
     with open(OBJECTS_DIR / hash, "rb") as f:
         return f.read()
-
-
-def parse_bytes(data_with_type: bytes):
-    data_type, _, data = data_with_type.partition(NULL_BYTE)
-    return data_type, data
 
 
 def set_head(hash: str):
