@@ -44,11 +44,6 @@ def load_object(hash: str) -> bytes:
     return object.data
 
 
-def read_object(hash: str):
-    with open(OBJECTS_DIR / hash, "rb") as f:
-        return f.read()
-
-
 def set_head(hash: str):
     with open(GIT_DIR / "HEAD", "w") as f:
         f.write(hash)
