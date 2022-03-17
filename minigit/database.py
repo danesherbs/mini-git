@@ -11,13 +11,6 @@ def init():
     OBJECTS_DIR.mkdir()
 
 
-def save_object(data: bytes, _type="blob") -> str:
-    object = Object(data=data, type=_type)
-    with open(OBJECTS_DIR / object.hash, "wb") as f:
-        f.write(object.data_with_type)
-    return object.hash
-
-
 class Object:
     def __init__(self, data: bytes, type: str):
         self.data = data
@@ -32,17 +25,24 @@ class Object:
         return self.type.encode() + NULL_BYTE + self.data
 
 
-def cat_file(hash: str) -> bytes:
-    return get_object(hash)
+def save_object(data: bytes, _type="blob") -> str:
+    object = Object(data=data, type=_type)
+    with open(OBJECTS_DIR / object.hash, "wb") as f:
+        f.write(object.data_with_type)
+    return object.hash
 
 
-def get_object(hash: str) -> bytes:
-    data_with_type = read_hash(hash)
+def load_object(hash: str) -> bytes:
+    data_with_type = read_object(hash)
     data_type, data = parse_bytes(data_with_type)
     return data
 
 
-def read_hash(hash: str):
+def cat_file(hash: str) -> bytes:
+    return load_object(hash)
+
+
+def read_object(hash: str):
     with open(OBJECTS_DIR / hash, "rb") as f:
         return f.read()
 

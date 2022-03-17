@@ -77,14 +77,14 @@ def read_tree(hash: str):
     delete_all_files_in_directory(pwd)
     for path, hash in get_tree(hash).items():
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = minigit.database.get_object(hash)
+        data = minigit.database.load_object(hash)
         with open(path, "wb") as f:
             f.write(data)
 
 
 def get_tree(hash: str, base_path=pathlib.Path("")) -> dict:
     tree = {}
-    tree_file = minigit.database.get_object(hash).decode()
+    tree_file = minigit.database.load_object(hash).decode()
 
     for line in tree_file.splitlines():
         _type, hash, name = line.split()
@@ -134,7 +134,7 @@ def commit(message: str):
 
 
 def get_commit(hash: str):
-    data = minigit.database.get_object(hash).decode()
+    data = minigit.database.load_object(hash).decode()
     match = re.match(
         r"tree (?P<tree>[a-zA-Z0-9]+)\n(parent (?P<parent>[a-zA-Z0-9]+)\n)?\n(?P<message>.*)",
         data,
