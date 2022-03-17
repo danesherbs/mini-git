@@ -12,11 +12,24 @@ def init():
 
 
 def hash_objects(data: bytes, _type="blob") -> str:
-    data_with_type = _type.encode() + NULL_BYTE + data
-    hash = hashlib.sha1(data_with_type).hexdigest()
-    with open(OBJECTS_DIR / hash, "wb") as f:
-        f.write(data_with_type)
-    return hash
+    object = Object(data=data, type=_type)
+    with open(OBJECTS_DIR / object.hash, "wb") as f:
+        f.write(object.data)
+    return object.hash
+
+
+class Object:
+    def __init__(self, data: bytes, type: str):
+        self.data = data
+        self.type = type
+
+    @property
+    def hash(self):
+        return hashlib.sha1(self.data_with_type).hexdigest()
+
+    @property
+    def data_with_type(self):
+        return self.type.encode() + NULL_BYTE + self.data
 
 
 def cat_file(hash: str) -> bytes:
@@ -24,12 +37,19 @@ def cat_file(hash: str) -> bytes:
 
 
 def get_object(hash: str) -> bytes:
-    with open(OBJECTS_DIR / hash, "rb") as f:
-        data_with_type = f.read()
-
-    data_type, _, data = data_with_type.partition(NULL_BYTE)
-
+    data_with_type = read_hash(hash)
+    data_type, data = parse_bytes(data_with_type)
     return data
+
+
+def read_hash(hash: str):
+    with open(OBJECTS_DIR / hash, "rb") as f:
+        return f.read()
+
+
+def parse_bytes(data_with_type: bytes):
+    data_type, _, data = data_with_type.partition(NULL_BYTE)
+    return data_type, data
 
 
 def set_head(hash: str):
