@@ -10,7 +10,7 @@ import minigit.database
 Commit = namedtuple("Commit", ["tree", "parent", "message"])
 
 
-def write_tree(path: Union[pathlib.Path, None] = None) -> str:
+def save_tree(path: Union[pathlib.Path, None] = None) -> str:
     """
     Creates a file in the object database which encodes the tree at `path`.
     The file is structured like so:
@@ -20,7 +20,6 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
         tree 53891a3c27b17e0f8fd96c058f968d19e340428d other
     """
     path = get_path(path)
-
     entries = []
 
     for p in paths(path):
@@ -33,7 +32,7 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
             entries.append((p.name, hash, "blob"))
 
         if p.is_dir():
-            hash = write_tree(p)
+            hash = save_tree(p)
             entries.append((p.name, hash, "tree"))
 
     data = entries_to_bytes(entries)
@@ -78,17 +77,17 @@ def to_bytes(s: str):
     return s.encode()
 
 
-def read_tree(hash: str):
+def restore_tree(hash: str):
     pwd = pathlib.Path("")
     delete_all_files_in_directory(pwd)
-    for path, hash in get_tree(hash).items():
+    for path, hash in load_tree(hash).items():
         path.parent.mkdir(parents=True, exist_ok=True)
         data = minigit.database.load_object(hash)
         with open(path, "wb") as f:
             f.write(data)
 
 
-def get_tree(hash: str, base_path=pathlib.Path("")) -> dict:
+def load_tree(hash: str, base_path=pathlib.Path("")) -> dict:
     tree = {}
     tree_file = minigit.database.load_object(hash).decode()
 
@@ -99,7 +98,7 @@ def get_tree(hash: str, base_path=pathlib.Path("")) -> dict:
             tree[fpath] = hash
         elif _type == "tree":
             pwd = base_path / name
-            subtree = get_tree(hash, base_path=pwd)
+            subtree = load_tree(hash, base_path=pwd)
             tree = {**tree, **subtree}
         else:
             raise ValueError(f'Got unexpected type "{_type}" in tree entry {line}')
@@ -127,7 +126,7 @@ def delete_all_files_in_directory(dir: pathlib.Path):
 
 
 def commit(message: str):
-    data = f"tree {write_tree()}\n"
+    data = f"tree {save_tree()}\n"
     head = minigit.database.get_head()
     if head:
         data += f"parent {head}\n"
@@ -161,5 +160,5 @@ def get_commit(hash: str):
 
 def checkout(hash: str):
     cmt = get_commit(hash)
-    read_tree(cmt.tree)
+    restore_tree(cmt.tree)
     minigit.database.set_head(hash)

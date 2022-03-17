@@ -64,12 +64,12 @@ def cat_file(args):
 
 def write_tree(args):
     pwd = pathlib.Path(".")
-    hash = minigit.core.write_tree(pwd)
+    hash = minigit.core.save_tree(pwd)
     print(hash)
 
 
 def read_tree(args):
-    minigit.core.read_tree(args.hash)
+    minigit.core.restore_tree(args.hash)
 
 
 def commit(args):
