@@ -6,11 +6,6 @@ OBJECTS_DIR = GIT_DIR / "objects"
 NULL_BYTE = b"\x00"
 
 
-def init():
-    GIT_DIR.mkdir()
-    OBJECTS_DIR.mkdir()
-
-
 class Object:
     def __init__(self, data: bytes, type: str):
         self.data = data
@@ -30,6 +25,11 @@ class Object:
         return Object(data=data, type=type)
 
 
+def init():
+    GIT_DIR.mkdir()
+    OBJECTS_DIR.mkdir()
+
+
 def save_object(data: bytes, _type="blob") -> str:
     object = Object(data=data, type=_type)
     with open(OBJECTS_DIR / object.hash, "wb") as f:
@@ -42,10 +42,6 @@ def load_object(hash: str) -> bytes:
         data_with_type = f.read()
         object = Object.from_bytes(data_with_type)
     return object.data
-
-
-def cat_file(hash: str) -> bytes:
-    return load_object(hash)
 
 
 def read_object(hash: str):

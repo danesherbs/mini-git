@@ -19,8 +19,7 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
         blob fa958e0dd2203e9ad56853a3f51e5945dad317a4 dogs.txt
         tree 53891a3c27b17e0f8fd96c058f968d19e340428d other
     """
-    if path is None:
-        path = pathlib.Path(".")
+    path = get_path(path)
 
     entries = []
 
@@ -40,6 +39,13 @@ def write_tree(path: Union[pathlib.Path, None] = None) -> str:
     data = entries_to_bytes(entries)
 
     return hash_tree(data)
+
+
+def get_path(path: pathlib.Path):
+    if path is None:
+        path = pathlib.Path(".")
+
+    return path
 
 
 def entries_to_bytes(entries: list):

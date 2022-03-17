@@ -58,7 +58,7 @@ def hash_object(args):
 
 
 def cat_file(args):
-    contents = minigit.database.cat_file(args.hash)
+    contents = minigit.database.load_object(args.hash)
     print(contents)
 
 
