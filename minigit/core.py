@@ -44,7 +44,7 @@ def save_file(path: pathlib.Path):
     return hash_file(data)
 
 
-def get_path(path: pathlib.Path):
+def get_path(path: Union[pathlib.Path, None]):
     if path is None:
         path = pathlib.Path(".")
 
@@ -149,16 +149,16 @@ class CommitParser:
     def __init__(self, data: str):
         self.data = data
 
-    def is_valid_commit(self):
-        return self.match_object is not None
-
-    @property
-    def match_object(self):
-        return re.match(self.commit_regex, self.data, re.MULTILINE | re.DOTALL)
-
     @property
     def commit_regex(self):
         return r"tree (?P<tree>[a-zA-Z0-9]+)\n(parent (?P<parent>[a-zA-Z0-9]+)\n)?\n(?P<message>.*)"
+
+    @property
+    def match_object(self):
+        return re.match(self.commit_regex, self.data, re.DOTALL)
+
+    def is_valid_commit(self):
+        return self.match_object is not None
 
     def to_commit(self):
         groups = self.match_object.groupdict()
@@ -189,6 +189,6 @@ def load_commit(hash: str):
 
 
 def checkout(hash: str):
-    cmt = load_commit(hash)
-    restore_tree(cmt.tree_hash)
+    commit = load_commit(hash)
+    restore_tree(commit.tree_hash)
     minigit.database.set_head(hash)
