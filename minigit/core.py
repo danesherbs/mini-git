@@ -129,15 +129,6 @@ def delete_all_files_in_directory(dir: pathlib.Path):
             delete_all_files_in_directory(dir / path)
 
 
-def commit(message: str):
-    tree_hash = save_tree()
-    head = minigit.database.get_head()
-    data = Commit(tree_hash, head, message).to_bytes()
-    commit_hash = minigit.database.save_object(data, _type="commit")
-    minigit.database.set_head(commit_hash)
-    return commit_hash
-
-
 class Commit:
     def __init__(self, tree_hash: str, head: Union[str, None], message: str) -> None:
         self.tree_hash = tree_hash
@@ -155,7 +146,7 @@ class Commit:
 
 
 class CommitParser:
-    def __init__(self, data):
+    def __init__(self, data: str):
         self.data = data
 
     def is_valid_commit(self):
@@ -178,17 +169,26 @@ class CommitParser:
         )
 
 
-def get_commit(hash: str):
+def save_commit(message: str):
+    tree_hash = save_tree()
+    head = minigit.database.get_head()
+    data = Commit(tree_hash, head, message).to_bytes()
+    commit_hash = minigit.database.save_object(data, _type="commit")
+    minigit.database.set_head(commit_hash)
+    return commit_hash
+
+
+def load_commit(hash: str):
     data = minigit.database.load_object(hash).decode()
     parser = CommitParser(data)
 
     if not parser.is_valid_commit():
         raise ValueError(f"Got unexpected formatted commit:\n\n{data}")
 
-    return CommitParser.to_commit()
+    return parser.to_commit()
 
 
 def checkout(hash: str):
-    cmt = get_commit(hash)
+    cmt = load_commit(hash)
     restore_tree(cmt.tree_hash)
     minigit.database.set_head(hash)

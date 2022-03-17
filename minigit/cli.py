@@ -73,15 +73,15 @@ def read_tree(args):
 
 
 def commit(args):
-    hash = minigit.core.commit(args.message)
+    hash = minigit.core.save_commit(args.message)
     print(hash)
 
 
 def log(args):
     hash = args.hash or minigit.database.get_head()
     while hash:
-        cmt = minigit.core.get_commit(hash)
-        print(f"\033[93mcommit {hash}\033[0m\n\n    {cmt.message}")
+        cmt = minigit.core.load_commit(hash)
+        print(f"\033[93mcommit {cmt.tree_hash}\033[0m\n\n    {cmt.message}")
         hash = cmt.parent
 
 
